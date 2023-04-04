@@ -13,9 +13,10 @@ class Application(tk.Tk, Configure_widgets):
         self.overrideredirect(True)                                                                     # убираем рамку окна
         self.resizable(False, False)                                                                    # запрещаем изменять размер окна
         self.title('CPU-RAM monitor')                                                                   # название окна
-
-
         self.cpu = CPUBar()
+        self.run_set_ui()
+
+    def run_set_ui(self):
         self.set_ui()                                                                                   # запускаем метод с виджетами
         self.make_bar_cpu_usage()
         self.configure_cpu_bar()
@@ -29,18 +30,18 @@ class Application(tk.Tk, Configure_widgets):
 
         self.combo_win = ttk.Combobox(self.bar2,
                                       values=['hide', "don't hide", 'min'],
-                                      width=10, state='readonly')                                       # создаем выпадающий список
+                                      width=9, state='readonly')                                       # создаем выпадающий список
         self.combo_win.current(1)                                                                       # указываем стандартное значие при первоначальном отображении
         self.combo_win.pack(side=tk.LEFT)
 
         ttk.Button(self.bar2, text='Move', command=self.configure_win).pack(side=tk.LEFT)               # создаем кнопку 'Move'
-        ttk.Button(self.bar2, text='>>>').pack(side=tk.LEFT)                                            # создаем кнопку '>>> '
 
         self.bar = ttk.LabelFrame(self, text='Power')                                                   # размещаем рамку (фрэйм) 'Power'
         self.bar.pack(fill=tk.BOTH)
 
         self.bind_class('Tk', '<Enter>', self.enter_mouse)
         self.bind_class('Tk', '<Leave>', self.leave_mouse)
+        self.combo_win.bind('<<ComboboxSelected>>', self.choice_combo)
 
     def make_bar_cpu_usage(self):
         ttk.Label(self.bar, text=f'physical cores: {self.cpu.cpu_count}, '
@@ -61,6 +62,22 @@ class Application(tk.Tk, Configure_widgets):
         self.ram_bar = ttk.Progressbar(self.bar, length=100)
         self.ram_bar.pack(fill=tk.X)
 
+    def  make_minimal_win(self):
+        self.bar1 = ttk.Progressbar(self, length=100)
+        self.bar1.pack(side=tk.LEFT)
+
+        self.ram_bar = ttk.Progressbar(self, length=100)
+        self.ram_bar.pack(side=tk.LEFT)
+
+        ttk.Button(self, text='full',
+                   command=self.make_full_win, width=5).pack(side=tk.RIGHT)
+
+        ttk.Button(self, text='move',
+                   command=self.configure_win, width=5).pack(side=tk.RIGHT)
+
+        self.update()
+        self.configure_min_win()
+
     def enter_mouse(self, event):
         if self.combo_win.current() == 0 or 1:
             self.geometry('')
@@ -68,6 +85,25 @@ class Application(tk.Tk, Configure_widgets):
     def leave_mouse(self, event):
         if self.combo_win.current() == 0:
             self.geometry(f'{self.winfo_width()}x1')                        # высота окна остается равной 1 пиксель
+
+    def choice_combo(self, event):
+        if self.combo_win.current() == 2:
+            self.enter_mouse('')
+            self.unbind_class('Tk', '<Enter>')
+            self.unbind_class('Tk', '<Leave>')
+            self.combo_win.unbind('<<ComboboxSelected>>')
+            self.after_cancel(self.wheel)
+            self.clear_win()                                                   # очищаем окно от виджетов
+            self.update()
+            self.make_minimal_win()
+
+    def make_full_win(self):
+        self.after_cancel(self.wheel)
+        self.clear_win()
+        self.update()
+        self.run_set_ui()
+        # self.enter_mouse('')
+        # self.combo_win.current(1)
 
     def app_exit(self):
         self.destroy()                                                      # закрываем окно

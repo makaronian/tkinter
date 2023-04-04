@@ -19,3 +19,12 @@ class Configure_widgets:
         else:
             self.overrideredirect(True)
         self.update()
+
+    def clear_win(self):                                        # проходимся списком по всем элементам в окне и уничтожаем их
+        for i in self.winfo_children():
+            i.destroy()
+
+    def configure_min_win(self):
+        self.bar1.configure(value=self.cpu.cpu_total())
+        self.ram_bar.configure(value=self.cpu.ram_usage()[2])
+        self.wheel = self.after(1000, self.configure_min_win)
